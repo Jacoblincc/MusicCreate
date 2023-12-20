@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spring SPA项目示例</title>
+    <!--导入前端Bootstrap框架-->
+    <link rel='stylesheet'
+          href='/webjars/bootstrap/4.6.1/dist/css/bootstrap.min.css'>
+</head>
+<body class="container">
+<!--基于Vue构建用户页面-->
+<div id="app" class="m-4">
+    <h2 class="text-info text-center">{{title}}</h2>
+    <div class="row">
+        <div class="col-6 offset-3">
+            <img src="images/scene.jpg" class="img-thumbnail img-fluid"
+                 alt="一幅风景画" @click="playMusic1()"/>
+        </div>
+    </div>
+
+    <div class="m-4 p-2 text-center">
+        <button @click="playMusic2()" class="btn btn-primary m-2">
+            查找id=10的Client记录</button>
+        <button @click="findClientById(100)" class="btn btn-warning m-2">
+            查找id=100的Client记录</button>
+
+        <button @click="startRecording()" class="btn btn-warning m-2">
+            开始录制</button>
+
+        <button @click="stopRecording()" class="btn btn-warning m-2">
+            结束录制</button>
+
+        <button @click="playRecording()" class="btn btn-warning m-2">
+            播放录制</button>
+    </div>
+
+    <audio ref="audioPlayer" controls></audio>
+
+    <div v-if="info.length>0" class="bg-light p-2 m-4">
+        {{info}}
+    </div>
+
+</div>
+<!--导入Vue框架-->
+<script src="webjars/vue/3.2.23/dist/vue.global.prod.js"></script>
+<!--导入axios-->
+<script src="webjars/axios/0.21.1/dist/axios.min.js"></script>
+
+<script>
+    var app = Vue.createApp({
+        data() {
+            return {
+                title: 'Spring SPA项目示例',
+                info: '',
+
+                // mediaRecorder: null,
+                // chunks: [],
+                // audioStream: null,
+
+                audioContext: null,
+                mediaStream: null,
+                mediaRecorder: null,
+                audioOutputDestination: null,
+                chunks: [],
+                recording: false,
+
+            }
+        },
+        methods: {
+            findClientById(id) {
+                axios.get("/api/client/" + id)
+                    .then(resp => {
+                        console.log(resp.data);
+                        app.info = resp.data.name;
+                    }).catch(function (error) {
+                    // 处理出错的情况
+                    console.log("出错了",error.response);
+                    app.info = error.response.data.statusCode + ":" +
+                        error.response.data.message
+                });
+            },
+
+            playMusic1() {
+                var audio = new Audio('sounds/perfectsound.mp3');
+                audio.play();
+                console.log("DDD1111");
+
+            },
+
+            playMusic2() {
+                var audio = new Audio('sounds/xiu.mp3');
+                audio.play();
+            },
+
+            // startRecording() {
+            //     navigator.mediaDevices.getUserMedia({ audio: true })
+            //         .then((stream) => {
+            //             this.audioStream = stream;
+            //             this.mediaRecorder = new MediaRecorder(stream);
+            //             this.mediaRecorder.addEventListener('dataavailable', (e) => {
+            //                 this.chunks.push(e.data);
+            //             });
+            //             this.mediaRecorder.start();
+            //             console.log('Recording started.');
+            //         })
+            //         .catch((err) => {
+            //             console.error('Error accessing microphone:', err);
+            //         });
+            // },
+            // stopRecording() {
+            //     this.mediaRecorder.stop();
+            //     this.audioStream.getTracks().forEach((track) => {
+            //         track.stop();
+            //     });
+            //     console.log('Recording stopped.');
+            // },
+
+            initializeAudioContext() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            },
+
+            startRecording() {
+                if(! this.audioContext) {
+                    this.initializeAudioContext();
+                }
+                this.chunks = [];
+                this.audioOutputDestination = this.audioContext.createMediaStreamDestination();
+                navigator.mediaDevices.getDisplayMedia({ audio: true})
+                    .then((stream) => {
+                        const sourceNode = this.audioContext.createMediaStreamSource(stream);
+                        sourceNode.connect(this.audioContext.destination);
+                        this.mediaStream = stream;
+                        this.mediaRecorder = new MediaRecorder(stream);
+                        this.mediaRecorder.addEventListener('dataavailable', (e) => {
+                            this.chunks.push(e.data);
+                        });
+                        this.mediaRecorder.start();
+                        this.recording = true;
+                        console.log('Recording started.');
+                    })
+                    .catch((error) => {
+                        console.error('Error accessing system audio:', error);
+                    });
+            },
+
+            stopRecording() {
+                this.mediaRecorder.stop();
+                this.mediaStream.getTracks().forEach((track) => track.stop());
+                this.audioOutputDestination.disconnect(); // 断开系统音频输出
+                this.recording = false;
+                console.log('Recording stopped.');
+            },
+
+            playRecording() {
+                if (this.chunks.length === 0) {
+                    console.log('No recording available.');
+                    return;
+                }
+
+                const audioBlob = new Blob(this.chunks, { type: 'audio/wav' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                const audioElement = new Audio(audioUrl);
+                audioElement.controls = true;
+                audioElement.autoplay = true;
+                document.body.appendChild(audioElement);
+
+                // 创建一个链接元素，用于下载音频文件
+                const downloadLink = document.createElement('a');
+                downloadLink.href = audioUrl;
+                downloadLink.download = 'recording.wav'; // 下载文件的名称
+                downloadLink.click();
+            }
+
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
