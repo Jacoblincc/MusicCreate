@@ -1,0 +1,10 @@
+.highlight-button {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    transition: filter 0.3s;
+}
+
+.highlight-button:active {
+    filter: brightness(1.2);
+}

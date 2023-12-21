@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spring SPA项目示例</title>
+    <!--导入前端Bootstrap框架-->
+    <link rel='stylesheet'
+          href='/webjars/bootstrap/4.6.1/dist/css/bootstrap.min.css'>
+    <style>
+        .container {
+            text-align: center;
+        }
+
+        .button {
+            width: 100px;
+            height: 100px;
+            margin: 5px;
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .record-button {
+            background-image: url("/images/key_do.png");
+        }
+
+        .stop-button {
+            background-image: url("/images/key_do.png");
+        }
+
+        .play-button {
+            background-image: url("/images/key_do.png");
+        }
+
+        .button-matrix {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body class="container" style="background-image: url('images/scene.jpg'); background-size: cover;">
+<!--基于Vue构建用户页面-->
+<div id="app" class="m-4">
+    <h2>Button Matrix</h2>
+    <div class="button-matrix">
+        <button @click="playMusic('C5')" class="button" style="background-image: url('/images/key_do.png')"></button>
+        <button @click="playMusic('D5')" class="button" style="background-image: url('/images/key_re.png')"></button>
+        <button @click="playMusic('E5')" class="button" style="background-image: url('/images/key_mi.png')"></button>
+        <button @click="playMusic('F5')" class="button" style="background-image: url('/images/key_fa.png')"></button>
+        <button @click="playMusic('G5')" class="button" style="background-image: url('/images/key_so.png')"></button>
+        <button @click="playMusic('A5')" class="button" style="background-image: url('/images/key_la.png')"></button>
+        <button @click="playMusic('B5')" class="button" style="background-image: url('/images/key_ti.png')"></button>
+    </div>
+    <div class="button-matrix">
+        <button @click="playMusic('C4')" class="button" style="background-image: url('/images/key_do.png')"></button>
+        <button @click="playMusic('D4')" class="button" style="background-image: url('/images/key_re.png')"></button>
+        <button @click="playMusic('E4')" class="button" style="background-image: url('/images/key_mi.png')"></button>
+        <button @click="playMusic('F4')" class="button" style="background-image: url('/images/key_fa.png')"></button>
+        <button @click="playMusic('G4')" class="button" style="background-image: url('/images/key_so.png')"></button>
+        <button @click="playMusic('A4')" class="button" style="background-image: url('/images/key_la.png')"></button>
+        <button @click="playMusic('B4')" class="button" style="background-image: url('/images/key_ti.png')"></button>
+    </div>
+    <div class="button-matrix">
+        <button @click="playMusic('C3')" class="button" style="background-image: url('/images/key_do.png')"></button>
+        <button @click="playMusic('D3')" class="button" style="background-image: url('/images/key_re.png')"></button>
+        <button @click="playMusic('E3')" class="button" style="background-image: url('/images/key_mi.png')"></button>
+        <button @click="playMusic('F3')" class="button" style="background-image: url('/images/key_fa.png')"></button>
+        <button @click="playMusic('G3')" class="button" style="background-image: url('/images/key_so.png')"></button>
+        <button @click="playMusic('A3')" class="button" style="background-image: url('/images/key_la.png')"></button>
+        <button @click="playMusic('B3')" class="button" style="background-image: url('/images/key_ti.png')"></button>
+    </div>
+
+    <div class="record-controls">
+        <button @click="startRecording()" class="button record-button"></button>
+        <button @click="stopRecording()" class="button stop-button"></button>
+        <button @click="playRecording()" class="button play-button"></button>
+    </div>
+</div>
+<!--导入Vue框架-->
+<script src="webjars/vue/3.2.23/dist/vue.global.prod.js"></script>
+<!--导入axios-->
+<script src="webjars/axios/0.21.1/dist/axios.min.js"></script>
+
+<script>
+    var app = Vue.createApp({
+        mounted(){
+            // 在组件挂载后，即可访问 DOM 元素
+            document.addEventListener('keydown', this.handleKeyDown);
+        },
+        beforeUnmount(){
+            // 在组件卸载前，移除事件监听器以避免内存泄漏
+            document.removeEventListener('keydown', this.handleKeyDown);
+        },
+        data() {
+            return {
+                title: 'Spring SPA项目示例',
+                info: '',
+
+                audioContext: null,
+                mediaStream: null,
+                mediaRecorder: null,
+                audioOutputDestination: null,
+                chunks: [],
+                recording: false,
+
+            }
+        },
+        methods: {
+            playMusic(key,button) {
+                var x = "";
+                switch (key){
+                    case 'C3':x="C3";break;
+                    case 'D3':x="D3";break;
+                    case 'E3':x="E3";break;
+                    case 'F3':x="F3";break;
+                    case 'G3':x="G3";break;
+                    case 'A3':x="A3";break;
+                    case 'B3':x="B3";break;
+                    case 'C4':x="C4";break;
+                    case 'D4':x="D4";break;
+                    case 'E4':x="E4";break;
+                    case 'F4':x="F4";break;
+                    case 'G4':x="G4";break;
+                    case 'A4':x="A4";break;
+                    case 'B4':x="B4";break;
+                    case 'C5':x="C5";break;
+                    case 'D5':x="D5";break;
+                    case 'E5':x="E5";break;
+                    case 'F5':x="F5";break;
+                    case 'G5':x="G5";break;
+                    case 'A5':x="A5";break;
+                    case 'B5':x="B5";break;
+                    default:break;
+
+                }
+                var audio = new Audio('sounds/piano/'+x+'.mp3');
+                audio.play();
+
+            },
+
+            handleKeyDown(event) {
+                const key = event.key.toLowerCase();
+
+                switch (key) {
+                    case 'w':
+                        this.playMusic('C5');
+                        break;
+                    case 'e':
+                        this.playMusic('D5');
+                        break;
+                    case 'r':
+                        this.playMusic('E5');
+                        break;
+                    case 't':
+                        this.playMusic('F5');
+                        break;
+                    case 'y':
+                        this.playMusic('G5');
+                        break;
+                    case 'u':
+                        this.playMusic('A5');
+                        break;
+                    case 'i':
+                        this.playMusic('B5');
+                        break;
+                    case 's':
+                        this.playMusic('C4');
+                        break;
+                    case 'd':
+                        this.playMusic('D4');
+                        break;
+                    case 'f':
+                        this.playMusic('E4');
+                        break;
+                    case 'g':
+                        this.playMusic('F4');
+                        break;
+                    case 'h':
+                        this.playMusic('G4');
+                        break;
+                    case 'j':
+                        this.playMusic('A4');
+                        break;
+                    case 'k':
+                        this.playMusic('B4');
+                        break;
+                    case 'z':
+                        this.playMusic('C3');
+                        break;
+                    case 'x':
+                        this.playMusic('D3');
+                        break;
+                    case 'c':
+                        this.playMusic('E3');
+                        break;
+                    case 'v':
+                        this.playMusic('F3');
+                        break;
+                    case 'b':
+                        this.playMusic('G3');
+                        break;
+                    case 'n':
+                        this.playMusic('A3');
+                        break;
+                    case 'm':
+                        this.playMusic('B3');
+                        break;
+                    default:
+                        break;
+                }
+            },
+
+            initializeAudioContext() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            },
+
+            startRecording() {
+                if (!this.audioContext) {
+                    this.initializeAudioContext();
+                }
+                this.chunks = [];
+                this.audioOutputDestination = this.audioContext.createMediaStreamDestination();
+
+                navigator.mediaDevices.getDisplayMedia({ audio: true })
+                    .then((stream) => {
+                        const audioTracks = stream.getAudioTracks();
+                        const audioStream = new MediaStream(audioTracks);
+
+                        const sourceNode = this.audioContext.createMediaStreamSource(audioStream);
+                        const destinationNode = this.audioContext.createMediaStreamDestination();
+
+                        sourceNode.connect(destinationNode);
+                        this.mediaStream = destinationNode.stream;
+                        this.mediaRecorder = new MediaRecorder(this.mediaStream);
+                        this.mediaRecorder.addEventListener('dataavailable', (e) => {
+                            this.chunks.push(e.data);
+                        });
+                        this.mediaRecorder.start();
+                        this.recording = true;
+                        console.log('Recording started.');
+                    })
+                    .catch((error) => {
+                        console.error('Error accessing system audio:', error);
+                    });
+            },
+
+            stopRecording() {
+                this.mediaRecorder.stop();
+                this.mediaStream.getTracks().forEach((track) => track.stop());
+                this.audioOutputDestination.disconnect(); // 断开系统音频输出
+                this.recording = false;
+                console.log('Recording stopped.');
+            },
+
+            playRecording() {
+                if (this.chunks.length === 0) {
+                    console.log('No recording available.');
+                    return;
+                }
+
+                const audioBlob = new Blob(this.chunks, { type: 'audio/wav' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                const audioElement = new Audio(audioUrl);
+                audioElement.controls = true;
+                audioElement.autoplay = true;
+                document.body.appendChild(audioElement);
+
+                // 创建一个链接元素，用于下载音频文件
+                const downloadLink = document.createElement('a');
+                downloadLink.href = audioUrl;
+                downloadLink.download = 'recording.wav'; // 下载文件的名称
+                downloadLink.click();
+            }
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
